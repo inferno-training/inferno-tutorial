@@ -54,11 +54,7 @@ module InfernoTemplate
     
           assert_response_status(200)
           assert_resource_type('Bundle')
-          assert_valid_bundle_entries(
-                resource_types: {
-                  'Condition': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition'
-                }
-              )
+          assert_valid_bundle_entries
         end
       end
     end
