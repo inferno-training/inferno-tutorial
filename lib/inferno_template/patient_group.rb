@@ -35,7 +35,7 @@ module InfernoTemplate
 
       run do
         assert_resource_type(:patient)
-        assert_valid_resource
+        assert_valid_resource(profile_url: 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-patient')
       end
     end
   end
