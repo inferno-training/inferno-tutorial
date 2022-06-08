@@ -41,23 +41,27 @@ module InfernoTemplate
     group from: :patient_group
 
     group do
-      id :condition
-      title 'Condition'
-
+      id :search_tests
+      title 'Search Tests'
+    
       input :patient_id
-
+    
       test do
-        id :condition_search_by_pateint
         title 'Condition Search by Patient'
-
+    
         run do
           fhir_search('Condition', params: { patient: patient_id })
-
+    
           assert_response_status(200)
           assert_resource_type('Bundle')
-          assert_valid_resource
+          assert_valid_bundle_entries(
+                resource_types: {
+                  'Condition': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition'
+                }
+              )
         end
       end
     end
+
   end
 end
