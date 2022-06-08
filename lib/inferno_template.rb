@@ -39,5 +39,25 @@ module InfernoTemplate
     # Tests and TestGroups can be written in separate files and then included
     # using their id
     group from: :patient_group
+
+    group do
+      id :condition
+      title 'Condition'
+
+      input :patient_id
+
+      test do
+        id :condition_search_by_pateint
+        title 'Condition Search by Patient'
+
+        run do
+          fhir_search('Condition', params: { patient: patient_id })
+
+          assert_response_status(200)
+          assert_resource_type('Bundle')
+          assert_valid_resource
+        end
+      end
+    end
   end
 end
