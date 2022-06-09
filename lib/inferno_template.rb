@@ -70,9 +70,9 @@ module InfernoTemplate
             assert_response_status(200)
             assert_resource_type('Bundle')
 
-            # There are not profiles for Observation or DocumentReference
+            # There are not profiles for Observation, DocumentReference, or Device
             # in US Core v3.1.1
-            pass_if ['Observation', 'DiagnosticReport'].include?(tested_resource),
+            pass_if ['Observation', 'DiagnosticReport', 'Device'].include?(tested_resource),
               "Note: no US Core Profile for #{tested_resource} resource type"
 
             assert_valid_bundle_entries(
