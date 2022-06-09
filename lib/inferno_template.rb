@@ -1,3 +1,4 @@
+
 require_relative 'inferno_template/patient_group'
 
 module InfernoTemplate
@@ -46,22 +47,42 @@ module InfernoTemplate
     
       input :patient_id
     
-      test do
-        title 'Condition Search by Patient'
-    
-        run do
-          fhir_search('Condition', params: { patient: patient_id })
-    
-          assert_response_status(200)
-          assert_resource_type('Bundle')
-          assert_valid_bundle_entries(
-            resource_types: {
-              'Condition': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition'
-            }
-          )
+      ['AllergyIntolerance',
+      'CarePlan',
+      'CareTeam',
+      'Condition',
+      'Device',
+      'DiagnosticReport',
+      'DocumentReference',
+      'Encounter',
+      'Goal',
+      'Immunization',
+      'MedicationRequest',
+      'Observation',
+      'Procedure'].each do |resource|
+
+        test do
+          title "#{resource} Search by Patient"
+      
+          run do
+            fhir_search(resource, params: { patient: patient_id })
+      
+            assert_response_status(200)
+            assert_resource_type('Bundle')
+
+            # There are not profiles for Observation or DocumentReference
+            # in US Core v3.1.1
+            pass_if ['Observation', 'DiagnosticReport'].include?(resource),
+              "Note: no US Core Profile for #{resource} resource type"
+
+            assert_valid_bundle_entries(
+              resource_types: {
+                "#{resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{resource.downcase}"
+              }
+            )
+          end
         end
       end
     end
-
   end
 end
