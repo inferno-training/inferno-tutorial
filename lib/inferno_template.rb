@@ -59,25 +59,25 @@ module InfernoTemplate
       'Immunization',
       'MedicationRequest',
       'Observation',
-      'Procedure'].each do |resource|
+      'Procedure'].each do |tested_resource|
 
         test do
-          title "#{resource} Search by Patient"
+          title "#{tested_resource} Search by Patient"
       
           run do
-            fhir_search(resource, params: { patient: patient_id })
+            fhir_search(tested_resource, params: { patient: patient_id })
       
             assert_response_status(200)
             assert_resource_type('Bundle')
 
             # There are not profiles for Observation or DocumentReference
             # in US Core v3.1.1
-            pass_if ['Observation', 'DiagnosticReport'].include?(resource),
-              "Note: no US Core Profile for #{resource} resource type"
+            pass_if ['Observation', 'DiagnosticReport'].include?(tested_resource),
+              "Note: no US Core Profile for #{tested_resource} resource type"
 
             assert_valid_bundle_entries(
               resource_types: {
-                "#{resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{resource.downcase}"
+                "#{tested_resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{tested_resource.downcase}"
               }
             )
           end
