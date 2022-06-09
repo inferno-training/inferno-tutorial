@@ -59,25 +59,31 @@ module InfernoTemplate
       'Immunization',
       'MedicationRequest',
       'Observation',
-      'Procedure'].each do |resource|
+      'Procedure'].each do |tested_resource|
 
         test do
-          title "#{resource} Search by Patient"
+          title "#{tested_resource} Search by Patient"
       
           run do
-            fhir_search(resource, params: { patient: patient_id })
+            fhir_search(tested_resource, params: { patient: patient_id })
       
             assert_response_status(200)
             assert_resource_type('Bundle')
 
-            # There are not profiles for Observation or DocumentReference
+            # skip_if is a shortcut to wrapping `skip` statement in an `if` block
+            # it is a good idea to use the safe navigation operator `&.` to avoid runtime errors on nil
+            skip_if resource.entry&.empty?, 'No entries in bundle response.'
+
+            info "Bundle contains #{resource.entry&.count} resources."
+
+            # There are not profiles for Observation, DocumentReference, or Device
             # in US Core v3.1.1
-            pass_if ['Observation', 'DiagnosticReport'].include?(resource),
-              "Note: no US Core Profile for #{resource} resource type"
+            pass_if ['Observation', 'DiagnosticReport', 'Device'].include?(tested_resource),
+              "Note: no US Core Profile for #{tested_resource} resource type"
 
             assert_valid_bundle_entries(
               resource_types: {
-                "#{resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{resource.downcase}"
+                "#{tested_resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{tested_resource.downcase}"
               }
             )
           end
