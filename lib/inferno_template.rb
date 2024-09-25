@@ -10,6 +10,8 @@ module InfernoTemplate
     input :url,
           title: 'FHIR Server Base Url'
 
+    input :access_token
+
     input :credentials,
           title: 'OAuth Credentials',
           type: :oauth_credentials,
@@ -19,6 +21,7 @@ module InfernoTemplate
     fhir_client do
       url :url
       oauth_credentials :credentials
+      bearer_token :access_token
     end
 
     # All FHIR validation requsets will use this FHIR validator
