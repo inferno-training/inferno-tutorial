@@ -26,7 +26,7 @@ module InfernoTemplate
 
     # All FHIR validation requsets will use this FHIR validator
     fhir_resource_validator do
-      # igs 'identifier#version' # Use this method for published IGs/versions
+      igs 'hl7.fhir.us.core#3.1.1' # Use this method for published IGs/versions
       # igs 'igs/filename.tgz'   # Use this otherwise
 
       exclude_message do |message|
@@ -72,7 +72,11 @@ module InfernoTemplate
 
           assert_response_status(200)
           assert_resource_type('Bundle')
-          assert_valid_bundle_entries
+          assert_valid_bundle_entries(
+            resource_types: {
+              'Condition': 'http://hl7.org/fhir/us/core/StructureDefinition/us-core-condition'
+            }
+          )
         end
       end
     end
