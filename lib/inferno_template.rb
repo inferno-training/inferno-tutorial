@@ -88,6 +88,12 @@ module InfernoTemplate
             assert_response_status(200)
             assert_resource_type('Bundle')
 
+            # skip_if is a shortcut to wrapping `skip` statement in an `if` block
+            # it is a good idea to use the safe navigation operator `&.` to avoid runtime errors on nil
+            skip_if resource.entry&.empty?, 'No entries in bundle response.'
+
+            info "Bundle contains #{resource.entry&.count} resources."
+
             # There are not profiles for Observation, DocumentReference, or Device
             # in US Core v3.1.1
             pass_if ['Observation', 'DiagnosticReport', 'Device'].include?(tested_resource),
