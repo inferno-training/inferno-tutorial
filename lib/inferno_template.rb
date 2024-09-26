@@ -1,4 +1,5 @@
 require_relative 'inferno_template/patient_group'
+require 'smart_app_launch_test_kit'
 
 module InfernoTemplate
   class Suite < Inferno::TestSuite
@@ -10,19 +11,10 @@ module InfernoTemplate
     input :url,
           title: 'FHIR Server Base Url'
 
-    input :access_token
-
     input :credentials,
           title: 'OAuth Credentials',
           type: :oauth_credentials,
           optional: true
-
-    # All FHIR requests in this suite will use this FHIR client
-    fhir_client do
-      url :url
-      oauth_credentials :credentials
-      bearer_token :access_token
-    end
 
     # All FHIR validation requsets will use this FHIR validator
     fhir_resource_validator do
@@ -34,76 +26,99 @@ module InfernoTemplate
       end
     end
 
-    # Tests and TestGroups can be defined inline
     group do
-      id :capability_statement
-      title 'Capability Statement'
-      description 'Verify that the server has a CapabilityStatement'
+      id :auth
+      title 'Auth'
+      optional
+      run_as_group
 
-      test do
-        id :capability_statement_read
-        title 'Read CapabilityStatement'
-        description 'Read CapabilityStatement from /metadata endpoint'
+      output :access_token, :patient_id
 
-        run do
-          fhir_get_capability_statement
-
-          assert_response_status(200)
-          assert_resource_type(:capability_statement)
-        end
-      end
+      group from: :smart_discovery
+      group from: :smart_standalone_launch
     end
 
-    # Tests and TestGroups can be written in separate files and then included
-    # using their id
-    group from: :patient_group
-
- 
     group do
-      id :search_tests
-      title 'Search Tests'
+      id :api
+      title 'API'
+      input :access_token
 
-      input :patient_id
+      # All FHIR requests in this suite will use this FHIR client
+      fhir_client do
+        url :url
+        bearer_token :access_token
+      end
 
-      ['AllergyIntolerance',
-      'CarePlan',
-      'CareTeam',
-      'Condition',
-      'Device',
-      'DiagnosticReport',
-      'DocumentReference',
-      'Encounter',
-      'Goal',
-      'Immunization',
-      'MedicationRequest',
-      'Observation',
-      'Procedure'].each do |tested_resource|
+      # Tests and TestGroups can be defined inline
+      group do
+        id :capability_statement
+        title 'Capability Statement'
+        description 'Verify that the server has a CapabilityStatement'
 
         test do
-          title "#{tested_resource} Search by Patient"
+          id :capability_statement_read
+          title 'Read CapabilityStatement'
+          description 'Read CapabilityStatement from /metadata endpoint'
 
           run do
-            fhir_search(tested_resource, params: { patient: patient_id })
+            fhir_get_capability_statement
 
             assert_response_status(200)
-            assert_resource_type('Bundle')
+            assert_resource_type(:capability_statement)
+          end
+        end
+      end
 
-            # skip_if is a shortcut to wrapping `skip` statement in an `if` block
-            # it is a good idea to use the safe navigation operator `&.` to avoid runtime errors on nil
-            skip_if resource.entry&.empty?, 'No entries in bundle response.'
+      # Tests and TestGroups can be written in separate files and then included
+      # using their id
+      group from: :patient_group
 
-            info "Bundle contains #{resource.entry&.count} resources."
+      group do
+        id :search_tests
+        title 'Search Tests'
 
-            # There are not profiles for Observation, DocumentReference, or Device
-            # in US Core v3.1.1
-            pass_if ['Observation', 'DiagnosticReport', 'Device'].include?(tested_resource),
-              "Note: no US Core Profile for #{tested_resource} resource type"
+        input :patient_id
 
-            assert_valid_bundle_entries(
-              resource_types: {
-                "#{tested_resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{tested_resource.downcase}"
-              }
-            )
+        ['AllergyIntolerance',
+        'CarePlan',
+        'CareTeam',
+        'Condition',
+        'Device',
+        'DiagnosticReport',
+        'DocumentReference',
+        'Encounter',
+        'Goal',
+        'Immunization',
+        'MedicationRequest',
+        'Observation',
+        'Procedure'].each do |tested_resource|
+
+          test do
+            title "#{tested_resource} Search by Patient"
+
+            run do
+              fhir_search(tested_resource, params: { patient: patient_id })
+
+              assert_response_status(200)
+              assert_resource_type('Bundle')
+
+              # skip_if is a shortcut to wrapping `skip` statement in an `if` block
+              # it is a good idea to use the safe navigation operator `&.` to avoid runtime errors on nil
+              skip_if resource.entry&.empty?, 'No entries in bundle response.'
+
+              info "Bundle contains #{resource.entry&.count} resources."
+
+              # There are not profiles for Observation, DocumentReference, or Device
+              # in US Core v3.1.1
+              pass_if ['Observation', 'DiagnosticReport', 'Device'].include?(tested_resource),
+                "Note: no US Core Profile for #{tested_resource} resource type"
+
+              assert_valid_bundle_entries(
+                resource_types: {
+                  "#{tested_resource}": "http://hl7.org/fhir/us/core/StructureDefinition/us-core-#{tested_resource.downcase}"
+                }
+              )
+            end
           end
         end
       end
