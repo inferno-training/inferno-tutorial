@@ -1,3 +1,4 @@
+
 require_relative 'inferno_template/patient_group'
 
 module InfernoTemplate
@@ -57,7 +58,6 @@ module InfernoTemplate
     # Tests and TestGroups can be written in separate files and then included
     # using their id
     group from: :patient_group
-
  
     group do
       id :search_tests
