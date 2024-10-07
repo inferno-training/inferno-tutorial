@@ -1,3 +1,4 @@
+
 require_relative 'inferno_template/patient_group'
 
 module InfernoTemplate
@@ -57,7 +58,6 @@ module InfernoTemplate
     # Tests and TestGroups can be written in separate files and then included
     # using their id
     group from: :patient_group
-
  
     group do
       id :search_tests
@@ -84,7 +84,7 @@ module InfernoTemplate
 
           run do
             fhir_search(tested_resource, params: { patient: patient_id })
-
+            
             assert_response_status(200)
             assert_resource_type('Bundle')
 
