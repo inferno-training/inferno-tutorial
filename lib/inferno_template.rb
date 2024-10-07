@@ -1,3 +1,4 @@
+
 require_relative 'inferno_template/patient_group'
 require 'smart_app_launch_test_kit'
 
