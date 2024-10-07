@@ -1,3 +1,4 @@
+
 require_relative 'inferno_template/patient_group'
 
 module InfernoTemplate
