@@ -4,6 +4,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
   let(:session_data_repo) { Inferno::Repositories::SessionData.new }
   let(:test_session) { repo_create(:test_session, test_suite_id: 'inferno_template_test_suite') }
   let(:url) { 'http://example.com/fhir' }
+  let(:access_token) { 'SAMPLE_TOKEN' }
   let(:success_outcome) do
     {
       outcomes: [{
@@ -43,7 +44,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('pass')
     end
@@ -53,7 +54,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 201, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/200/)
@@ -64,7 +65,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/Patient/)
@@ -75,7 +76,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/resource with id/)
@@ -98,7 +99,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
         response_body: resource.to_json
       )
 
-      result = run(test, url: url)
+      result = run(test, url: url, access_token: access_token)
 
       expect(result.result).to eq('pass')
     end
@@ -116,7 +117,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
         response_body: resource.to_json
       )
 
-      result = run(test, url: url)
+      result = run(test, url: url, access_token: access_token)
 
       expect(result.result).to eq('fail')
     end
