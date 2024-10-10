@@ -1,10 +1,30 @@
 RSpec.describe InfernoTemplate::PatientGroup do
-  let(:suite) { Inferno::Repositories::TestSuites.new.find('test_suite_template') }
+  let(:suite) { Inferno::Repositories::TestSuites.new.find('inferno_template_test_suite') }
   let(:group) { suite.groups[1] }
   let(:session_data_repo) { Inferno::Repositories::SessionData.new }
-  let(:test_session) { repo_create(:test_session, test_suite_id: 'test_suite_template') }
+  let(:test_session) { repo_create(:test_session, test_suite_id: 'inferno_template_test_suite') }
   let(:url) { 'http://example.com/fhir' }
-  let(:error_outcome) { FHIR::OperationOutcome.new(issue: [{ severity: 'error' }]) }
+  let(:access_token) { 'SAMPLE_TOKEN' }
+  let(:success_outcome) do
+    {
+      outcomes: [{
+        issues: []
+      }],
+      sessionId: ''
+    }
+  end
+  let(:error_outcome) do
+    {
+      outcomes: [{
+        issues: [{
+          location: 'Patient.identifier[0]',
+          message: 'Identifier.system must be an absolute reference, not a local reference',
+          level: 'ERROR'
+        }]
+      }],
+      sessionId: ''
+    }
+  end
 
   def run(runnable, inputs = {})
     test_run_params = { test_session_id: test_session.id }.merge(runnable.reference_hash)
@@ -24,7 +44,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('pass')
     end
@@ -34,7 +54,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 201, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/200/)
@@ -45,7 +65,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/Patient/)
@@ -56,7 +76,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
       stub_request(:get, "#{url}/Patient/#{patient_id}")
         .to_return(status: 200, body: resource.to_json)
 
-      result = run(test, url: url, patient_id: patient_id)
+      result = run(test, url: url, patient_id: patient_id, access_token: access_token)
 
       expect(result.result).to eq('fail')
       expect(result.result_message).to match(/resource with id/)
@@ -67,9 +87,9 @@ RSpec.describe InfernoTemplate::PatientGroup do
     let(:test) { group.tests.last }
 
     it 'passes if the resource is valid' do
-      stub_request(:post, "#{ENV.fetch('VALIDATOR_URL')}/validate")
+      stub_request(:post, "#{ENV.fetch('FHIR_RESOURCE_VALIDATOR_URL')}/validate")
         .with(query: hash_including({}))
-        .to_return(status: 200, body: FHIR::OperationOutcome.new.to_json)
+        .to_return(status: 200, body: success_outcome.to_json)
 
       resource = FHIR::Patient.new
       repo_create(
@@ -79,13 +99,13 @@ RSpec.describe InfernoTemplate::PatientGroup do
         response_body: resource.to_json
       )
 
-      result = run(test)
+      result = run(test, url: url, access_token: access_token)
 
       expect(result.result).to eq('pass')
     end
 
     it 'fails if the resource is not valid' do
-      stub_request(:post, "#{ENV.fetch('VALIDATOR_URL')}/validate")
+      stub_request(:post, "#{ENV.fetch('FHIR_RESOURCE_VALIDATOR_URL')}/validate")
         .with(query: hash_including({}))
         .to_return(status: 200, body: error_outcome.to_json)
 
@@ -97,7 +117,7 @@ RSpec.describe InfernoTemplate::PatientGroup do
         response_body: resource.to_json
       )
 
-      result = run(test)
+      result = run(test, url: url, access_token: access_token)
 
       expect(result.result).to eq('fail')
     end
