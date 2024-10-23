@@ -1,6 +1,6 @@
 module InfernoTemplate
   class PatientGroup < Inferno::TestGroup
-    title 'Patient  Tests'
+    title 'Patient Tests'
     description 'Verify that the server makes Patient resources available'
     id :patient_group
 
@@ -10,7 +10,9 @@ module InfernoTemplate
         Verify that Patient resources can be read from the server.
       )
 
-      input :patient_id
+      input :patient_id,
+            title: 'Patient ID'
+
       # Named requests can be used by other tests
       makes_request :patient
 
