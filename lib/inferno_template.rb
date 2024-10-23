@@ -3,18 +3,36 @@ require_relative 'inferno_template/patient_group'
 
 module InfernoTemplate
   class Suite < Inferno::TestSuite
-    id :test_suite_template
-    title 'Inferno Test Suite Template'
-    description 'A basic test suite template for Inferno'
+    id :inferno_template_test_suite
+    title 'Inferno Template Test Suite'
+    description 'Inferno template test suite.'
 
-    # This input will be available to all tests in this suite
-    input :url
+    # These inputs will be available to all tests in this suite
+    input :url,
+          title: 'FHIR Server Base Url'
+
     input :access_token
+
+    input :credentials,
+          title: 'OAuth Credentials',
+          type: :oauth_credentials,
+          optional: true
 
     # All FHIR requests in this suite will use this FHIR client
     fhir_client do
       url :url
+      oauth_credentials :credentials
       bearer_token :access_token
+    end
+
+    # All FHIR validation requsets will use this FHIR validator
+    fhir_resource_validator do
+      igs 'hl7.fhir.us.core#3.1.1' # Use this method for published IGs/versions
+      # igs 'igs/filename.tgz'   # Use this otherwise
+
+      exclude_message do |message|
+        message.message.match?(/\A\S+: \S+: URL value '.*' does not resolve/)
+      end
     end
 
     # Tests and TestGroups can be defined inline
@@ -40,13 +58,13 @@ module InfernoTemplate
     # Tests and TestGroups can be written in separate files and then included
     # using their id
     group from: :patient_group
-
+ 
     group do
       id :search_tests
       title 'Search Tests'
-    
+
       input :patient_id
-    
+
       ['AllergyIntolerance',
       'CarePlan',
       'CareTeam',
@@ -63,10 +81,10 @@ module InfernoTemplate
 
         test do
           title "#{tested_resource} Search by Patient"
-      
+
           run do
             fhir_search(tested_resource, params: { patient: patient_id })
-      
+
             assert_response_status(200)
             assert_resource_type('Bundle')
 
